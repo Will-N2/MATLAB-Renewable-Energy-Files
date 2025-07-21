@@ -1,0 +1,80 @@
+Q_nom = 3.4; % Nominal capacity in Ah
+
+% Discharge data
+C02 = [0,4.15; 33.8,4.10; 78.86,4.08; 262.82,4.02; 608.37,3.90; 1002.68,3.79; 1505.09,3.65; 2005.36,3.55; 2501.07,3.47; 2737.66,3.38; 2880.36,3.30; 3098.18,3.23; 3158.72,3.18; 3233.37,3.08; 3338.52,2.97; 3361.05,2.73; 3394.85,2.50];
+C05 = [0,4.08; 37.55,4.03; 90.13,4.00; 503.22,3.86; 1002.68,3.71; 1505.90,3.57; 2005.36,3.45; 2497.32,3.31; 2741.41,3.25; 2872.85,3.21; 3068.13,3.09; 3116.95,2.99; 3225.86,2.86; 3263.41,2.77; 3315.99,2.69; 3351.95,2.55; 3385.23,2.40];
+C1  = [0,4.00; 26.29,3.95; 63.84,3.90; 191.52,3.86; 326.72,3.81; 501.36,3.74; 1005.90,3.60; 1505.90,3.45; 2005.90,3.30; 2501.07,3.17; 2752.68,3.08; 2925.43,3.00; 3064.38,2.86; 3158.72,2.74; 3218.84,2.64; 3258.23,2.54; 3278.43,2.40];
+C2  = [0,3.84; 11.27,3.78; 41.31,3.73; 105.15,3.69; 229.08,3.66; 499.01,3.61; 1010.19,3.42; 1502.15,3.35; 2005.13,3.25; 2343.53,3.19; 2752.68,2.88; 2996.78,2.75; 3126.21,2.66; 3244.62,2.57; 3267.17,2.47; 3281.25,2.36; 3294.85,2.20];
+
+% Convert mAh to Ah
+C02(:,1) = C02(:,1)/1000;
+C05(:,1) = C05(:,1)/1000;
+C1(:,1)  = C1(:,1)/1000;
+C2(:,1)  = C2(:,1)/1000;
+
+% Discharge currents (A)
+I_0C02 = 0.2 * Q_nom;
+I_05C = 0.5 * Q_nom;
+I_1C  = 1.0 * Q_nom;
+I_2C  = 2.0 * Q_nom;
+
+% Shepherd Equation
+shepherd_function = @(params, q, I, Q) ...
+    params(1) - params(2)*I - params(3)*Q./(Q-q).*q + params(4)*exp(-params(5)*q);
+
+% Initial guess: [E0, Rint, K, A, B]
+initial_params = [4.2, 0.05, 0.01, 0.1, 5];
+options = optimset('Display','off');
+
+% Fit each C-rate separately
+fit_params = zeros(4,5); % 4 C-rates, 5 parameters
+
+% 0.2C
+obj_02C = @(params) shepherd_function(params, C02(:,1), I_0C02, Q_nom) - C02(:,2);
+fit_params(1,:) = lsqnonlin(obj_02C, initial_params, [], [], options);
+
+% 0.5C
+obj_05C = @(params) shepherd_function(params, C05(:,1), I_05C, Q_nom) - C05(:,2);
+fit_params(2,:) = lsqnonlin(obj_05C, initial_params, [], [], options);
+
+% 1C
+obj_1C = @(params) shepherd_function(params, C1(:,1), I_1C, Q_nom) - C1(:,2);
+fit_params(3,:) = lsqnonlin(obj_1C, initial_params, [], [], options);
+
+% 2C
+obj_2C = @(params) shepherd_function(params, C2(:,1), I_2C, Q_nom) - C2(:,2);
+fit_params(4,:) = lsqnonlin(obj_2C, initial_params, [], [], options);
+
+% Plot all data and fits
+figure; hold on;
+plot(C02(:,1)*1000, C02(:,2), 'bo', 'DisplayName','0.2C Data');
+plot(C05(:,1)*1000, C05(:,2), 'go', 'DisplayName','0.5C Data');
+plot(C1(:,1)*1000,  C1(:,2),  'ro', 'DisplayName','1C Data');
+plot(C2(:,1)*1000,  C2(:,2),  'ko', 'DisplayName','2C Data');
+
+q_fit = linspace(0, Q_nom, 300);
+plot(q_fit*1000, shepherd_function(fit_params(1,:), q_fit, I_0C02, Q_nom), 'b-', 'LineWidth',2, 'DisplayName','0.2C Fit');
+plot(q_fit*1000, shepherd_function(fit_params(2,:), q_fit, I_05C, Q_nom), 'g-', 'LineWidth',2, 'DisplayName','0.5C Fit');
+plot(q_fit*1000, shepherd_function(fit_params(3,:), q_fit, I_1C,  Q_nom), 'r-', 'LineWidth',2, 'DisplayName','1C Fit');
+plot(q_fit*1000, shepherd_function(fit_params(4,:), q_fit, I_2C,  Q_nom), 'k-', 'LineWidth',2, 'DisplayName','2C Fit');
+
+xlabel('Discharge Capacity (mAh)');
+ylabel('Voltage (V)');
+title('Shepherd Equation Fit to NMC Battery Data');
+legend('Location','SouthWest');
+grid on;
+
+% Parameters for each C-rate
+fprintf('Fitting parameters for each C-rate:\n');
+fprintf('C-rate\tE0(V)\tRint(Ohm)\tK\tA\tB\n');
+fprintf('0.2C\t%.3f\t%.5f\t%.5f\t%.5f\t%.5f\n', fit_params(1,:));
+fprintf('0.5C\t%.3f\t%.5f\t%.5f\t%.5f\t%.5f\n', fit_params(2,:));
+fprintf('1C\t%.3f\t%.5f\t%.5f\t%.5f\t%.5f\n', fit_params(3,:));
+fprintf('2C\t%.3f\t%.5f\t%.5f\t%.5f\t%.5f\n', fit_params(4,:));
+
+% Explanations of the effects of adjusting each parameter
+disp('Effect of parameters:');
+disp('E0: Sets initial open circuit voltage.');
+disp('Rint: Internal resistance causes voltage sag proportional to current.');
+disp('K: Polarization term, models overpotential as battery discharges.');
+disp('A, B: Control exponential drop near end of discharge.'); 
