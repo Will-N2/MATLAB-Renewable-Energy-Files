@@ -1,0 +1,30 @@
+% Data to use
+Flow = 10:10:160;
+Turbine_Efficiency = [29.39 54.04 70.99 82.04 88.75 92.44 94.19 94.84 94.99 95.00 94.99 94.84 94.19 92.44 88.75 82.04] / 100;
+Pump_Efficiency =    [13 30 45 58 69 78 85 90 93 94 93 90 85 78 69 58] / 100;
+Density = 1000;
+Gravity = 9.81;
+Head = 100;
+% Equations
+Power_Generation = Density * Gravity * Flow * Head .* Turbine_Efficiency / 1e6;
+Pump_Power = Density * Gravity * Flow * Head ./ Pump_Efficiency / 1e6;
+Round_Trip_Efficiency = Turbine_Efficiency .* Pump_Efficiency;
+% Round-trip efficiency at 80 MW Generation
+[~, idx_gen] = min(abs(Power_Generation - 80));
+Efficiency_At_80_Generation = Round_Trip_Efficiency(idx_gen) * 100;
+Flow_At_80_Generation = Flow(idx_gen);
+%Round-trip efficiency at 80 MW Storage (Pumping)
+[~, idx_pump] = min(abs(Pump_Power - 80));
+Efficiency_At_80_Storage = Round_Trip_Efficiency(idx_pump) * 100;
+Flow_At_80_Storage = Flow(idx_pump);
+% Maximum round-trip efficiency
+[Max_Eff, idx_max] = max(Round_Trip_Efficiency);
+Optimal_Flow = Flow(idx_max);
+Optimal_Power_Generation = Power_Generation(idx_max);
+Optimal_Pump_Power = Pump_Power(idx_max);
+% Answers to Q3
+fprintf('Round-trip efficiency at 80 MW Generation: %.2f%% at Flow = %d m^3/s\n', Efficiency_At_80_Generation, Flow_At_80_Generation);
+fprintf('Round-trip efficiency at 80 MW Storage: %.2f%% at Flow = %d m^3/s\n', Efficiency_At_80_Storage, Flow_At_80_Storage);
+fprintf('Maximum round-trip efficiency: %.2f%% at Flow = %d m^3/s\n', Max_Eff * 100, Optimal_Flow);
+fprintf('Optimal Generation Power: %.2f MW\n', Optimal_Power_Generation);
+fprintf('Optimal Storage Power: %.2f MW\n', Optimal_Pump_Power);

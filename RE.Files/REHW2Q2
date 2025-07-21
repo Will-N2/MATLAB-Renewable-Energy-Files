@@ -1,0 +1,30 @@
+% Data to use
+Q = 10:10:160;
+eff_percent = [14 31 46 59 70 79 86 91 94 95 94 91 86 79 70 59];
+eff = eff_percent / 100;
+density = 1000;
+Gravity = 9.81;
+Head = 280 - 180;
+% Equations
+Power = density * Gravity * Q .* Head .* eff;
+MegaWatts = Power / 1e6;
+[Max_Power, idx] = max(MegaWatts);
+Peak_Flow = Q(idx);
+Peak_Eff = eff(idx);
+N = 360;
+% Line Chart
+figure;
+plot(Q, MegaWatts, '-o', 'LineWidth', 2);
+title('Generated Power vs. Volumetric Flow Rate');
+xlabel('Flow Rate (m^3/s)');
+ylabel('Generated Power (MW)');
+grid on; 
+% Convertions
+HP = Max_Power * 1e6 / 745.7;
+Feet = Head * 3.281;
+Ns = N * sqrt(HP) / Feet^(5/4);
+% Answers for Q2
+fprintf('Peak Power: %.2f MW\n', Max_Power);
+fprintf('Peak Flow Rate: %.2f m^3/s\n', Peak_Flow);
+fprintf('Customary Specific Speed Ns: %.2f\n', Ns)
+fprintf('Francis Turbine because 50 < Ns < 250')

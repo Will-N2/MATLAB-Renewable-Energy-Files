@@ -1,0 +1,45 @@
+% Data
+Gravity = 9.81;
+Head = 500;
+Friction = 0.015;
+Pen_Length = 5000;
+Pen_Diameter = 1;
+Minor_Loss_1 = 5;
+Minor_Loss_2 = 50;
+Eff = 0.85;
+Density = 1000;
+% Equations/Position Data
+Nozzle = [
+    0.2, 0.30;
+    0.5, 0.25;
+    1.0, 0.20;
+    2.0, 0.18;
+    4.0, 0.15
+];
+Positions = size(Nozzle,1);
+Velocity = zeros(Positions,1);
+Flow = zeros(Positions,1);
+Power_Out = zeros(Positions,1);
+Area = pi/4 * Pen_Diameter^2;
+
+for i = 1:Positions
+    Nozzle_Minor_Loss = Nozzle(i,1);
+    Jet_Diameter = Nozzle(i,2);
+    Jet_Area = pi/4 * Jet_Diameter^2;
+    Area_Ratio = (Jet_Area / Area)^2;
+    Bracket = 1 + ((Friction*Pen_Length/Pen_Diameter) + Minor_Loss_1 + Minor_Loss_2 + Nozzle_Minor_Loss) * Area_Ratio;
+    Velocity(i) = sqrt(2 * Gravity * Head / Bracket);
+    Flow(i) = Jet_Area * Velocity(i);
+    Power_Out(i) = Eff * Density * Gravity * Flow(i) * Head / 1e6;
+end
+
+% Table for all of the results 
+Nozzle_Percent_Closed = [0; 25; 50; 75; 90];
+fprintf('____________________________________________________________\n');
+fprintf('Nozzle %% Closed | D_jet [m] | veloc [m/s] | Q [m^3/s] | P [MW]\n');
+fprintf('____________________________________________________________\n');
+for i = 1:Positions
+    fprintf('     %2d        |   %.2f     |   %6.2f    |  %6.2f   | %6.2f\n', ...
+        Nozzle_Percent_Closed(i), Nozzle(i,2), Velocity(i), Flow(i), Power_Out(i));
+end
+fprintf('____________________________________________________________\n');

@@ -1,0 +1,90 @@
+% Data
+Boltzmann = 1.38e-23; 
+Charge_q = 1.6e-19;
+J0 = 1e-12;
+Short_Circuit_Density = 0.01;
+Irradiance = 1000;
+Voc = @(T, Js) (Boltzmann*T/Charge_q) * log(Js/J0);
+
+% Equations separated by question
+% Part a: Open circuit voltage at cell temp 20°C and irradiance I = 1000 W/m^2
+T_20 = 273.15 + 20;
+I_20 = 1000;
+Js_20 = Short_Circuit_Density * (I_20/Irradiance);
+Voc_20 = Voc(T_20, Js_20);
+
+% Part b: Open circuit voltage at cell temp 10°C and irradiance I = 500 W/m^2
+T_10 = 273.15 + 10;
+I_10 = 500;
+Js_10 = Short_Circuit_Density * (I_10/Irradiance);
+Voc_10 = Voc(T_10, Js_10);
+
+% Part c: Open circuit voltage at cell temp 30°C and irradiance I = 1000 W/m^2
+T_30 = 273.15 + 30;
+I_30 = 1000;
+Js_30 = Short_Circuit_Density * (I_30/Irradiance);
+Voc_30 = Voc(T_30, Js_30);
+
+% Part d: Temperature coefficient of Voc
+temp_coeff = ((Voc_30 - Voc_20) / (T_30 - T_20)) / Voc_20 * 100;
+
+% Part e: Voltage and current density at max power, and max power density at 40°C, I = 1000 W/m^2
+T_40 = 273.15 + 40;
+I_40 = 1000;
+Js_40 = Short_Circuit_Density * (I_40/Irradiance);
+Voc_40 = Voc(T_40, Js_40);
+Vmp_40 = 0.8 * Voc_40; % Approximation
+Jmp_40 = Js_40;        % Approximation
+Pmax_40 = Vmp_40 * Jmp_40 * 1e4; % W/m^2 (1 A/cm^2 = 1e4 A/m^2)
+
+% Part f: Plot max power density vs irradiance at 25°C
+T_25 = 273.15 + 25;
+I_list = [100, 300, 500, 700, 1000];
+Pmax_25 = zeros(size(I_list));
+for i = 1:length(I_list)
+    Js = Short_Circuit_Density * (I_list(i)/Irradiance);
+    Voc_i = Voc(T_25, Js);
+    Vmp_i = 0.8 * Voc_i;
+    Jmp_i = Js;
+    Pmax_25(i) = Vmp_i * Jmp_i * 1e4; % W/m^2
+end
+
+figure;
+subplot(1,2,1)
+plot(I_list, Pmax_25, 'bo-', 'LineWidth', 2);
+xlabel('Irradiance (W/m^2)');
+xticks(0:100:1000);
+ylabel('Max Power Density (W/m^2)');
+title('Max Power Density vs Irradiance at 25°C');
+grid on;
+
+% Part g: Max power density vs irradiance, considering cell temperature variation
+NOCT = 45; % °C
+Ta = 10;   % Ambient temperature (°C)
+I_list2 = [160, 320, 480, 640, 960, 1120];
+Pmax_varT = zeros(size(I_list2));
+for i = 1:length(I_list2)
+    I = I_list2(i);
+    Tcell = Ta + (NOCT - 20)/800 * I; % °C
+    Tcell_Boltzmann = Tcell + 273.15;
+    Js = Short_Circuit_Density * (I/Irradiance);
+    Voc_i = Voc(Tcell_Boltzmann, Js);
+    Vmp_i = 0.8 * Voc_i;
+    Jmp_i = Js;
+    Pmax_varT(i) = Vmp_i * Jmp_i * 1e4; % W/m^2
+end
+
+subplot(1,2,2)
+plot(I_list2, Pmax_varT, 'rs-', 'LineWidth', 2);
+xlabel('Irradiance (W/m^2)');
+xticks(0:100:1000);
+ylabel('Max Power Density (W/m^2)');
+title('Max Power Density vs Irradiance (Variable Cell Temp)');
+grid on;
+
+% Results
+fprintf('a. Voc at 20°C and 1000 W/m^2: %.3f V\n', Voc_20);
+fprintf('b. Voc at 10°C and 500 W/m^2: %.3f V\n', Voc_10);
+fprintf('c. Voc at 30°C and 1000 W/m^2: %.3f V\n', Voc_30);
+fprintf('d. Temperature coefficient of Voc: %.3f %%/Boltzmann\n', temp_coeff);
+fprintf('e. At 40°C and 1000 W/m^2:V = %.3f V, J = %.3f A/cm^2, Pmax = %.1f W/m^2\n', Vmp_40, Jmp_40, Pmax_40);

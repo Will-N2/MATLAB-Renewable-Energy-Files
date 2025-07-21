@@ -1,0 +1,54 @@
+% Data
+h = 6.626e-34;
+c = 3.0e8;
+e = 1.602e-19;
+
+% Questions---------------------------------------------------------------
+% Part a: Photon energy and frequency
+wavelengths_nm = 100:50:2000;         % Wavelengths in nm
+wavelengths_m = wavelengths_nm * 1e-9;
+frequencies = c ./ wavelengths_m;     % Frequencies in Hz
+energies_eV = (h * frequencies) / e;  % Energies in eV
+
+% Part b: Frequency of He-Ne laser
+lambda_0 = 633e-9;  % Wavelength in free space (m)
+F_Air = c / lambda_0;
+F_Water = F_Air;
+F_Si = F_Air;
+
+% Part c: Wavelength in different media
+Water = 1.33;
+Glass = 1.52;
+Si = 3.88;
+lambda_water = lambda_0 / Water;
+lambda_glass = lambda_0 / Glass;
+lambda_si = lambda_0 / Si;
+
+% Plots-------------------------------------------------------------------
+% Energy vs Wavelength
+figure;
+subplot(1,2,1)
+plot(wavelengths_nm, energies_eV, 'b', 'LineWidth', 1.5);
+xlabel('Wavelength (nm)');
+xticks(100:100:2000);
+ylabel('Energy (eV)');
+title('Photon Energy vs. Wavelength');
+grid on;
+% Frequency vs Wavelength
+subplot(1,2,2)
+plot(wavelengths_nm, frequencies, 'g', 'LineWidth', 1.5);
+xlabel('Wavelength (nm)');
+xticks(100:100:2000);
+ylabel('Frequency (Hz)');
+title('Photon Frequency vs. Wavelength');
+grid on;
+
+% Results-----------------------------------------------------------------
+fprintf('Part (b) - Frequency of He-Ne laser:\n');
+fprintf('In air: %.3e Hz\n', F_Air);
+fprintf('In water: %.3e Hz\n', F_Water);
+fprintf('In silicon: %.3e Hz\n\n', F_Si);
+fprintf('Part (c) - Wavelength of He-Ne laser in media:\n');
+fprintf('In water: %.2f nm\n', lambda_water * 1e9);
+fprintf('In glass: %.2f nm\n', lambda_glass * 1e9);
+fprintf('In silicon: %.2f nm\n', lambda_si * 1e9);
